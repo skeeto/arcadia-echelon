@@ -22,7 +22,7 @@ enum { EV_KILL = 0, EV_CLEARED = 1, EV_TAKEN = 2 };
 #define NET_STATE_BYTES     23
 #define NET_FIRE_BYTES      10
 #define NET_EVENT_BYTES     14
-#define NET_HEARTBEAT_BYTES 14
+#define NET_HEARTBEAT_BYTES 18
 #define NET_MAX_MSG         32
 
 typedef struct {
@@ -50,6 +50,7 @@ typedef struct {
     int32_t  sid;
     uint32_t seed;
     uint32_t game_time;
+    uint32_t gen;
     uint8_t  is_anchor;
 } MsgHeartbeat;
 

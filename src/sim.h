@@ -23,6 +23,7 @@ typedef struct {
     int weapon;                  /* 0 none, else 1..N selects a weapon (F-keys) */
     int role_sel;                /* 0 none, else 1..3 selects a role */
     int restart;                 /* rejoin after game over */
+    int new_game;                /* start a fresh run (resets the world + difficulty) */
 } Input;
 
 typedef struct {
@@ -36,7 +37,7 @@ typedef struct {
     int32_t  score;
     int      lives;
     uint8_t  alive;
-    uint32_t respawn_at, invuln_until, last_fire, last_alt, last_special;
+    uint32_t respawn_at, invuln_until, last_fire, last_alt, last_special, last_newgame;
 } LocalPlayer;
 
 /* Sound cues the host thread should play this tick (see SND_FILE in echelon.c). */

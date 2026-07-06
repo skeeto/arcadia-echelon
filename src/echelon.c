@@ -23,7 +23,7 @@
 
 static GameState g_game;
 static int       g_open;
-static uint32_t  s_last_state, s_last_hb, s_last_roster;
+static uint32_t  s_last_state, s_last_hb, s_last_roster, s_last_gen;
 
 /* ------------------------------------------------------------------ input */
 
@@ -48,9 +48,10 @@ static void gather_input(Input *in)
     in->down    = ar_key_down(VK_DOWN)   ? 1 : 0;
     in->ascend  = ar_key_down(VK_HOME)   ? 1 : 0;
     in->descend = ar_key_down(VK_END)    ? 1 : 0;
-    in->fire    = ar_key_down(VK_INSERT) ? 1 : 0;
-    in->special = ar_key_down(VK_F5)     ? 1 : 0;
-    in->restart = in->fire;
+    in->fire     = ar_key_down(VK_INSERT) ? 1 : 0;
+    in->special  = ar_key_down(VK_F5)     ? 1 : 0;
+    in->new_game = ar_key_down(VK_BACK)   ? 1 : 0;   /* Backspace: fresh run */
+    in->restart  = in->fire;
 
     if (ar_key_down(VK_F1)) in->weapon = 1;
     else if (ar_key_down(VK_F2)) in->weapon = 2;
@@ -160,6 +161,7 @@ static void send_heartbeat(uint32_t now)
     hb.sid       = g_game.local_id;
     hb.seed      = g_game.clock.seed;
     hb.game_time = clock_time(&g_game.clock, now);
+    hb.gen       = g_game.clock.gen;
     hb.is_anchor = (g_game.local_id == g_game.clock.anchor_id) ? 1 : 0;
     len = net_pack_heartbeat(&hb, buf);
     ar_send(NET_CHANNEL, buf, len);
@@ -197,6 +199,12 @@ static void on_tick(ArContext *ctx, unsigned now_ms)
     sim_advance(&g_game, &in, now_ms);
     play_sounds();
 
+    /* a New Game bumps the clock generation — push it out immediately */
+    if (g_game.clock.gen != s_last_gen) {
+        s_last_gen = g_game.clock.gen;
+        if (g_game.local_id >= 0) { send_heartbeat(now_ms); s_last_hb = now_ms; }
+    }
+
     if (g_game.local_id >= 0) {
         send_events();     /* immediate: kills/clears/pickups */
         send_fires();      /* immediate: muzzle events for remote tracers */
@@ -221,7 +229,7 @@ static void on_packet(ArContext *ctx, int channel, const void *data, int len)
     case MSG_FIRE:      sim_apply_fire(&g_game, &fr, now);  break;
     case MSG_EVENT:     sim_apply_event(&g_game, &ev);      break;
     case MSG_HEARTBEAT: clock_observe(&g_game.clock, g_game.local_id, hb.sid, hb.seed,
-                                      hb.game_time, hb.is_anchor, now); break;
+                                      hb.game_time, hb.gen, hb.is_anchor, now); break;
     }
 }
 
@@ -235,6 +243,7 @@ static int on_serialize(ArContext *ctx, int channel, void *buf, int cap)
     hb.sid       = g_game.local_id;
     hb.seed      = g_game.clock.seed;
     hb.game_time = clock_time(&g_game.clock, GetTickCount());
+    hb.gen       = g_game.clock.gen;
     hb.is_anchor = (g_game.local_id == g_game.clock.anchor_id) ? 1 : 0;
     return net_pack_heartbeat(&hb, (uint8_t *)buf);
 }

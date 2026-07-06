@@ -4,10 +4,20 @@
 void clock_init(Clock *c, uint32_t seed, uint32_t now_ms)
 {
     c->seed = seed;
+    c->gen = 0;
     c->have_game = 1;          /* we assume we're first until we hear otherwise */
     c->epoch_ms = now_ms;      /* gameTime starts at 0 */
     c->slew = 0;
     c->anchor_id = -1;
+}
+
+void clock_reset(Clock *c, uint32_t seed, uint32_t now_ms)
+{
+    c->gen++;                  /* newer generation wins over any running game */
+    c->seed = seed;
+    c->epoch_ms = now_ms;
+    c->slew = 0;
+    c->have_game = 1;
 }
 
 uint32_t clock_time(const Clock *c, uint32_t now_ms)
@@ -28,10 +38,23 @@ static void adopt_time(Clock *c, uint32_t gt, uint32_t now_ms)
 }
 
 int clock_observe(Clock *c, int my_id, int peer_id, uint32_t peer_seed,
-                  uint32_t peer_gt, int peer_is_anchor, uint32_t now_ms)
+                  uint32_t peer_gt, uint32_t peer_gen, int peer_is_anchor, uint32_t now_ms)
 {
-    uint32_t my_gt = clock_time(c, now_ms);
-    int32_t  ahead = (int32_t)(peer_gt - my_gt);   /* >0: peer is ahead of us */
+    uint32_t my_gt;
+    int32_t  ahead;
+
+    /* A newer generation (someone hit New Game) overrides everything; an older
+     * one is ignored so a straggler on the previous game can't drag us back. */
+    if (peer_gen > c->gen) {
+        c->gen = peer_gen;
+        c->seed = peer_seed;
+        adopt_time(c, peer_gt, now_ms);
+        return 1;
+    }
+    if (peer_gen < c->gen) return 0;
+
+    my_gt = clock_time(c, now_ms);
+    ahead = (int32_t)(peer_gt - my_gt);            /* >0: peer is ahead of us */
 
     if (peer_seed != c->seed) {
         /* Different game instances — converge on one. The more-established

@@ -349,6 +349,27 @@ static void steer_homing(GameState *g, Proj *p, float dt)
     }
 }
 
+/* Start a fresh run: reset the shared timeline (so difficulty drops back to 0),
+ * pick a new seed, and reset the local player. Propagates to peers via the
+ * clock generation bump in their next heartbeat. */
+static void sim_new_game(GameState *g, uint32_t now)
+{
+    uint32_t ns = now * 2654435761u + g->game_time_ms * 40503u + 0x1234567u;
+    clock_reset(&g->clock, ns, now);
+    g->seed = ns;
+    g->n_proj = g->n_dead = g->n_hit = g->n_expl = g->n_spark = g->n_tbul = 0;
+    g->n_oevents = g->n_ofires = g->n_osounds = 0;
+    g->p.score = 0;
+    g->p.lives = START_LIVES;
+    g->p.width_lvl = g->p.power_lvl = 0;
+    g->p.special_charges = 0;
+    g->p.weapon4 = 0;
+    g->p.weapon = 0;
+    g->gameover = 0;
+    player_spawn(g, now);
+    push_sound(g, SND_ONEUP);
+}
+
 /* ---------------- step ----------------------------------------------------- */
 
 void sim_advance(GameState *g, const Input *in, uint32_t now_ms)
@@ -363,6 +384,11 @@ void sim_advance(GameState *g, const Input *in, uint32_t now_ms)
     g->n_oevents = 0;      /* outgoing events/fires/sounds collected this tick */
     g->n_ofires = 0;
     g->n_osounds = 0;
+
+    if (in->new_game && now_ms - g->p.last_newgame > 500) {
+        g->p.last_newgame = now_ms;
+        sim_new_game(g, now_ms);
+    }
 
     g->seed = g->clock.seed;
     g->game_time_ms = clock_time(&g->clock, now_ms);

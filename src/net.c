@@ -68,6 +68,7 @@ int net_pack_heartbeat(const MsgHeartbeat *m, uint8_t *buf)
     o = put_u32(buf, o, (uint32_t)m->sid);
     o = put_u32(buf, o, m->seed);
     o = put_u32(buf, o, m->game_time);
+    o = put_u32(buf, o, m->gen);
     o = put_u8 (buf, o, m->is_anchor);
     return o;   /* NET_HEARTBEAT_BYTES */
 }
@@ -112,7 +113,8 @@ int net_unpack(const uint8_t *data, int len, MsgState *st, MsgFire *fr,
         hb->sid       = (int32_t)get_u32(data, 1);
         hb->seed      = get_u32(data, 5);
         hb->game_time = get_u32(data, 9);
-        hb->is_anchor = get_u8(data, 13);
+        hb->gen       = get_u32(data, 13);
+        hb->is_anchor = get_u8(data, 17);
         return MSG_HEARTBEAT;
     default:
         return 0;
