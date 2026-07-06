@@ -6,6 +6,12 @@ multiplayer, and players can pop in and out of the game at any time.
 
 ![](docs/screenshot.png)
 
+## Install
+
+Download `toy13.zip` from the GitHub releases page and unzip it in your
+Arcadia installation `toys` folder. It will appear as a new "Echelon" toy
+in the listing.
+
 ## Gameplay
 
 Fly up an endless, procedurally-generated landscape and destroy everything in
