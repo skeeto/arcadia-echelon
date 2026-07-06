@@ -385,7 +385,10 @@ void sim_advance(GameState *g, const Input *in, uint32_t now_ms)
     g->n_ofires = 0;
     g->n_osounds = 0;
 
-    if (in->new_game && now_ms - g->p.last_newgame > 500) {
+    /* Only the moderator (anchor = lowest present player id) may start a new
+     * game, so one player can't reset the shared world out from under everyone. */
+    if (in->new_game && g->local_id == g->clock.anchor_id &&
+        now_ms - g->p.last_newgame > 500) {
         g->p.last_newgame = now_ms;
         sim_new_game(g, now_ms);
     }
@@ -647,6 +650,7 @@ void sim_snapshot(GameState *g, RenderSnapshot *s, uint32_t now_ms)
     s->p_alive = g->p.alive;
     s->p_invuln = (now_ms < g->p.invuln_until) ? 1 : 0;
     s->p_special = g->p.special_charges;
+    s->p_is_mod = (g->local_id == g->clock.anchor_id) ? 1 : 0;
     s->p_fire_age = now_ms - g->p.last_fire;
 
     for (i = 0; i < g->n_proj && n < MAX_PROJECTILES; i++) {

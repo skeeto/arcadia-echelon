@@ -50,6 +50,7 @@ typedef struct {
     float    px, py, p_alt_f;
     uint32_t p_fire_age;      /* ms since last local shot (for muzzle flash) */
     uint8_t  p_alt, p_role, p_weapon, p_width, p_power, p_alive, p_invuln, p_special;
+    uint8_t  p_is_mod;        /* local client is the moderator (may start New Game) */
 
     SnapProj   proj[MAX_PROJECTILES]; int n_proj;
     SnapExpl   expl[MAX_EXPL]; int n_expl;

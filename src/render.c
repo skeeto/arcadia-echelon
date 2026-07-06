@@ -506,15 +506,22 @@ static void draw_hud(const RenderSnapshot *s, int w, int h)
         }
     }
 
-    glColor3f(0.45f, 0.52f, 0.62f);
-    glfont_text(12.0f, 34.0f, "BACKSPACE = NEW GAME");
+    if (s->p_is_mod) {
+        glColor3f(0.45f, 0.52f, 0.62f);
+        glfont_text(12.0f, 34.0f, "BACKSPACE = NEW GAME");
+    }
 
     if (s->gameover) {
         glColor3f(1.0f, 0.5f, 0.5f);
         glfont_text((float)w * 0.5f - 60.0f, (float)h * 0.5f + 22.0f, "GAME OVER");
         glColor3f(0.9f, 0.9f, 0.9f);
         glfont_text((float)w * 0.5f - 95.0f, (float)h * 0.5f - 2.0f, "INSERT = REJOIN");
-        glfont_text((float)w * 0.5f - 95.0f, (float)h * 0.5f - 24.0f, "BACKSPACE = NEW GAME");
+        if (s->p_is_mod) {
+            glfont_text((float)w * 0.5f - 95.0f, (float)h * 0.5f - 24.0f, "BACKSPACE = NEW GAME");
+        } else {
+            glColor3f(0.6f, 0.6f, 0.6f);
+            glfont_text((float)w * 0.5f - 95.0f, (float)h * 0.5f - 24.0f, "NEW GAME: MODERATOR ONLY");
+        }
     }
     glEnable(GL_DEPTH_TEST);
 }
