@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.16)
 project(echelon C)
 
 # --- Pull in the Arcadia SDK -------------------------------------------------
-# For local development, override the fetch with the sibling checkout:
+# Fetched as a pinned HTTPS tarball of a specific commit — no Git required
+# (CMake downloads it with its built-in libcurl). To update, change the commit
+# in the URL and recompute the hash:
+#   curl -sL <url> | sha256sum
+# For local development, point at a sibling checkout to skip the download:
 #   -DFETCHCONTENT_SOURCE_DIR_ARCADIA_SDK=../arcadia-sdk
-# Otherwise it clones the published SDK.
 include(FetchContent)
 FetchContent_Declare(arcadia_sdk
-    GIT_REPOSITORY https://github.com/skeeto/arcadia-sdk.git
-    GIT_TAG        main)
+    URL      https://github.com/skeeto/arcadia-sdk/archive/db899d072f58496c0b1d23e2dcd28e6e11e46144.tar.gz
+    URL_HASH SHA256=b64b82526966128280050e1b5afd228fdef0f2e13edfe55a99e568fba24a5404
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(arcadia_sdk)   # SDK samples aren't built as a subproject.
 
 # add_arcadia_toy() and its ARCADIA_SDK_* path vars are set in the SDK's own
